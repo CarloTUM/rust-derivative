@@ -20,6 +20,7 @@ extern crate derivative;
 fn main() {
     #[derive(Derivative)]
     #[derivative(Debug)]
+    #[allow(dead_code)]
     struct Foo {
         foo: isize,
     }

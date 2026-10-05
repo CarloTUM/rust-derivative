@@ -31,6 +31,7 @@ struct CharSplits<'a, Sep> {
 }
 
 #[cfg(not(tarpaulin_include))]
+#[allow(clippy::clone_on_copy)]
 fn clone(s: &Str) -> &Str {
     Clone::clone(&s)
 }
