@@ -14,15 +14,11 @@ jobs:
           - beta
           - nightly
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
+      - run: cargo check
 
   test:
     name: Test Suite
@@ -63,22 +59,22 @@ jobs:
             features: 'use_core'
             extra_args: 'compile_test -- --ignored'
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
-      - uses: actions-rs/cargo@v1
+      - run: cargo test --features=${{ matrix.features }} ${{ matrix.extra_args }}
         env:
           RUST_BACKTRACE: 1
-        with:
-          command: test
-          args: --features=${{ matrix.features }} ${{ matrix.extra_args }}
-      - run: cargo install mdbook --no-default-features --features search --vers "^0.4.0"
+      # mdbook's dependencies require a newer rustc than our MSRV, so build it
+      # with stable. `mdbook test` itself still uses the matrix toolchain.
+      - run: rustup toolchain install stable --profile minimal
+      - run: cargo +stable install mdbook --no-default-features --features search --vers "^0.4.0"
       - run: mdbook build
-      - run: mdbook test -L ./target/debug/deps/
-        if: ${{ matrix.features }} != 'use_core'
+      # Stable cargo puts the proc-macro in `deps/`, nightly cargo (new build-dir
+      # layout) only in `debug/` itself, so search both.
+      - run: mdbook test -L ./target/debug/deps/ -L ./target/debug/
+        if: matrix.features != 'use_core'
 
   clippy:
     name: Clippy
@@ -92,14 +88,9 @@ jobs:
           - ''
           - 'use_core'
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-targets --features=${{ matrix.features }} -- -D warnings
+          components: clippy
+      - run: cargo clippy --all-targets --features=${{ matrix.features }} -- -D warnings
