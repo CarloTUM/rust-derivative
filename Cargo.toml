@@ -10,6 +10,8 @@ description = "A set of alternative `derive` attributes for Rust"
 keywords = ["derive", "macro", "macro1-1", "plugin"]
 categories = ["rust-patterns"]
 edition = '2018'
+rust-version = "1.85"
+resolver = "3"
 
 [lib]
 proc-macro = true
